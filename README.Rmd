@@ -1,0 +1,24 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, message=FALSE, warning=FALSE, 
+  engine="scala", engine.opts = c("-savecompiled", "-classpath ./target/scala-2.12/scala-splash_2.12-0.1.0-SNAPSHOT.jar"), cache=TRUE
+)
+```
+
+# scala-splash
+
+Access ScrapingHub's [Splash HTTP API](https://splash.readthedocs.io/en/stable/api.html) in Scala.
+
+
+```{scala}
+import requests._
+import splish.Splash
+
+val s = Splash()
+
+println(s.isActive())
+```
