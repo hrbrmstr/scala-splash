@@ -4,8 +4,8 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE, message=FALSE, warning=FALSE, 
-  engine="scala", engine.opts = c("-savecompiled", "-classpath ./target/scala-2.12/scala-splash_2.12-0.1.0-SNAPSHOT.jar"), cache=TRUE
+  echo = TRUE, message=FALSE, warning=FALSE, collapse = FALSE,
+  engine="scala", engine.opts = c("-savecompiled", '-cp "./target/pack/lib/scala-splash_2.12-0.1.0-SNAPSHOT.jar:./target/pack/lib/requests_2.12-0.1.3.jar:./target/pack/lib/ujson_2.12-0.6.6.jar"'), cache=TRUE
 )
 ```
 
@@ -13,12 +13,99 @@ knitr::opts_chunk$set(
 
 Access ScrapingHub's [Splash HTTP API](https://splash.readthedocs.io/en/stable/api.html) in Scala.
 
+After experiencing the elegance of the [`scala-requests`](https://github.com/lihaoyi/requests-scala) library, I felt compelled to create a similar, lightweight library that works with Splash server instances. 
 
-```{scala}
-import requests._
+If you haven't hit the above link yet and are unfamilar with Splash, the TLDR is that it's an alternative to Selenium in that it's a full browser and executes javascript. The full rendering engine is based on Qt Webkit and Splash instances have a REST API that provides a ton of flexibility when needed and ease of use for more casual scraping tasks.
+
+You can get it up and running locally with Docker via:
+
+```
+sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash
+```
+
+The first thing we need to do is make a connection to the server
+
+```{scala eval=TRUE}
 import splish.Splash
 
 val s = Splash()
 
-println(s.isActive())
+println(s)
 ```
+
+We can test that connection and get some other information as well:
+
+```{scala eval=FALSE}
+println(
+  "Server is up? " + s.isActive() + "\n" +
+  "What's the server version? " + s.version()("splash") + "\n" +
+  "How long has the server been up? " + s.performanceStatistics()("cputime").num
+)
+```
+```{scala eval=TRUE, echo=FALSE}
+import splish.Splash
+
+val s = Splash()
+
+println(
+  "Server is up? " + s.isActive() + "\n" +
+  "What's the server version? " + s.version()("splash") + "\n" +
+  "How long has the server been up? " + s.performanceStatistics()("cputime").num
+)
+```
+
+The library makes use of [`uJson`](http://www.lihaoyi.com/upickle/#uJson) for more complex return types and a few methods return a `requests` [`Response`](https://github.com/lihaoyi/requests-scala/blob/master/requests/src/requests/Model.scala#L235-L276) object due to the result of a call to more dynamic endpoints being un-knowable at call time (Splash allows you to use `Lua` to perform complex page interaction and you can return images, plaintext, HTML or JSON via the Lua interface).
+
+The classic use case for Splash is to feed it a URL and get HTML back after it's had time to process any javascript. The URL in the following example relies on javascript to add content to the page:
+
+```{scala eval=FALSE}
+val html = s.renderHTML("https://rud.is/splash-js-test.html")
+
+println(html)
+```
+```{scala eval=TRUE, echo=FALSE}
+import splish.Splash
+
+val s = Splash()
+
+val html = s.renderHTML("https://rud.is/splash-js-test.html")
+
+println(html)
+```
+
+Here's what that looks like just using the `requests` library:
+
+```{scala}
+import requests._
+
+val res = requests.get("https://rud.is/splash-js-test.html")
+
+println(res.text)
+```
+
+Most of the other Splash API endpoints have corresponding methods in the library (the image-oriented ones are on the TODO list). We can get the same page in both Splash JSON:
+
+```{scala eval=FALSE}
+println(s.renderJSON("https://rud.is/splash-js-test.html", responseBody = true, html = true))
+```
+```{scala echo=FALSE}
+import splish.Splash
+
+println(Splash().renderJSON("https://rud.is/splash-js-test.html", responseBody = true, html = true))
+```
+
+and HAR formats:
+
+```{scala eval=FALSE}
+println(s.renderHAR("https://rud.is/splash-js-test.html?1", responseBody = true))
+```
+```{scala echo=FALSE}
+import splish.Splash
+
+println(Splash().renderHAR("https://rud.is/splash-js-test.html?2", responseBody = true))
+```
+
+You can check out the library source for `run()` method examples and [take a look at the scaladocs](https://hrbrmstr.github.io/scala-splash/splash/index.html) for more information.
+
+I'll be rounding out the corners on the library and submitting it to one or more central repositories soon.
+
