@@ -1,0 +1,782 @@
+<!DOCTYPE html >
+<html>
+        <head>
+          <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <title></title>
+          <meta name="description" content="" />
+          <meta name="keywords" content="" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../lib/index.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript" src="../lib/jquery.js"></script>
+      <script type="text/javascript" src="../lib/jquery.panzoom.min.js"></script>
+      <script type="text/javascript" src="../lib/jquery.mousewheel.min.js"></script>
+      <script type="text/javascript" src="../lib/index.js"></script>
+      <script type="text/javascript" src="../index.js"></script>
+      <script type="text/javascript" src="../lib/scheduler.js"></script>
+      <script type="text/javascript" src="../lib/template.js"></script>
+      <script type="text/javascript" src="../lib/tools.tooltip.js"></script>
+      
+      <script type="text/javascript">
+        /* this variable can be used by the JS to determine the path to the root document */
+        var toRoot = '../';
+      </script>
+    
+        </head>
+        <body>
+      <div id="search">
+        <span id="doc-title"><span id="doc-version"></span></span>
+        <span class="close-results"><span class="left">&lt;</span> Back</span>
+        <div id="textfilter">
+          <span class="input">
+            <input autocapitalize="none" placeholder="Search" id="index-input" type="text" accesskey="/" />
+            <i class="clear material-icons"></i>
+            <i id="search-icon" class="material-icons"></i>
+          </span>
+        </div>
+    </div>
+      <div id="search-results">
+        <div id="search-progress">
+          <div id="progress-fill"></div>
+        </div>
+        <div id="results-content">
+          <div id="entity-results"></div>
+          <div id="member-results"></div>
+        </div>
+      </div>
+      <div id="content-scroll-container" style="-webkit-overflow-scrolling: touch;">
+        <div id="content-container" style="-webkit-overflow-scrolling: touch;">
+          <div id="subpackage-spacer">
+            <div id="packages">
+              <h1>Packages</h1>
+              <ul>
+                <li name="_root_.root" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="_root_"></a><a id="root:_root_"></a>
+      <span class="permalink">
+      <a href="index.html#_root_" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="This is the documentation for the splish library." href="../index.html"><span class="name">root</span></a>
+      </span>
+      
+      <p class="shortcomment cmt">This is the documentation for the <code>splish</code> library.</p><div class="fullcomment"><div class="comment cmt"><p>This is the documentation for the <code>splish</code> library.</p><h4> Package Information </h4><p>The <a href="index.html" class="extype" name="splish">splish</a> package contains a single class <a href="Splash.html" class="extype" name="splish.Splash">splish.Splash</a> with methods for interacting with a <a href="https://splash.readthedocs.io/en/stable/index.html" target="_blank">ScrapingHub Splash</a> instance.</p><p>If you haven’t hit the above link yet and are unfamilar with Splash, the
+TLDR is that it’s an alternative to Selenium in that it’s a full browser
+and executes javascript. The full rendering engine is based on Qt Webkit
+and Splash instances have a REST API that provides a ton of flexibility
+when needed and ease of use for more casual scraping tasks.</p><p>You can get it up and running locally with Docker via:</p><p>    sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash</p><p>If you've built the source and run <code>sbt packInstall</code>, you can start playing
+with <code>splash</code> on the command line via <code>~/local/bin/splash-main</code>. Here's the help:</p><pre>splash <span class="num">1.0</span>
+Usage: splash [options] url
+
+  url                    the URL to scrape
+  -r, --render html      request action; one of <span class="lit">'html'</span>, <span class="lit">'json'</span> or <span class="lit">'har'</span>
+  --help                 prints <span class="kw">this</span> usage text
+  -w, --wait &lt;value&gt;     How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is <span class="num">2</span> seconds
+  -t, --timeout &lt;value&gt;  Overall page/connection timeout. Defaults to <span class="num">30</span> seconds
+  -h, --host &lt;value&gt;     Splash instance host name or IP address (defaults to localhost)
+  -p, --port &lt;value&gt;     Splash instance port <span class="kw">if</span> not the default (<span class="num">8050</span>)
+  -u, --user &lt;value&gt;     Splash username (<span class="kw">if</span> authentication is required). Default is no authentcation.
+  -p, --pass &lt;value&gt;     Splash password (<span class="kw">if</span> authentication is required). Default is no authentication.
+  -s, --ssl              Use an SSL connection to the Splash instance? (defaults to <span class="kw">false</span>)</pre><p>The first thing we need to do is make a connection to the server</p><pre><span class="kw">import</span> splish.Splash
+
+<span class="kw">val</span> s = Splash()
+
+println(s)
+
+## Splash(localhost,<span class="num">8050</span>,<span class="kw">null</span>,<span class="kw">null</span>,<span class="kw">false</span>)</pre><p>We can test that connection and get some other information as well:</p><pre>println(
+  <span class="lit">"Server is up? "</span> + s.isActive() + <span class="lit">"\n"</span> +
+  <span class="lit">"What's the server version? "</span> + s.version()(<span class="lit">"splash"</span>) + <span class="lit">"\n"</span> +
+  <span class="lit">"How long has the server been up? "</span> + s.performanceStatistics()(<span class="lit">"cputime"</span>).num
+)
+
+## Server is up? <span class="kw">true</span>
+## What's the server version? <span class="lit">"3.2"</span>
+## How long has the server been up? <span class="num">68.84</span></pre><p>The library makes use of
+[<code>uJson</code>](http://www.lihaoyi.com/upickle/#uJson) for more complex return
+types and a few methods return a <code>requests</code>
+[<code>Response</code>](https://github.com/lihaoyi/requests-scala/blob/master/requests/src/requests/Model.scala#L235-L276)
+object due to the result of a call to more dynamic endpoints being
+un-knowable at call time (Splash allows you to use <code>Lua</code> to perform
+complex page interaction and you can return images, plaintext, HTML or
+JSON via the Lua interface).</p><p>The classic use case for Splash is to feed it a URL and get HTML back
+after it’s had time to process any javascript. The URL in the following
+example relies on javascript to add content to the page:</p><pre><span class="kw">val</span> html = s.renderHTML(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(html)
+
+## &lt;html&gt;&lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;This won't be here <span class="kw">if</span> javascript is disabled&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##
+##
+## &lt;/body&gt;&lt;/html&gt;</pre><p>Here’s what that looks like just using the <code>requests</code> library:</p><pre><span class="kw">import</span> requests._
+
+<span class="kw">val</span> res = requests.get(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(res.text)
+
+## &lt;html&gt;
+##   &lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##   &lt;/body&gt;
+## &lt;/html&gt;</pre><p>Most of the other Splash API endpoints have corresponding methods in the
+library (the image-oriented ones are on the TODO list). We can get the
+same page in both Splash
+JSON:</p><pre>println(s.renderJSON(<span class="lit">"https://rud.is/splash-js-test.html"</span>, responseBody = <span class="kw">true</span>, html = <span class="kw">true</span>))
+
+## {<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"requestedUrl"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"geometry"</span>:[<span class="num">0</span>,<span class="num">0</span>,<span class="num">1024</span>,<span class="num">768</span>],<span class="lit">"html"</span>:<span class="lit">"<html><head>\n    <title>Test</title>\n  </head>\n  <body onload=\"addElements()\">\n    < p>This is a Splash test page.\n    < p><span id=\"target\">This won't be here if javascript is disabled</span>\n    <script>\n      function addElements() {\n        document.getElementById(\"target\").innerHTML = \"This won't be here if javascript is disabled\" ;\n      }    \n    </script>\n  \n\n</body></html>"</span>}</pre><p>and HAR
+formats:</p><pre>println(s.renderHAR(<span class="lit">"https://rud.is/splash-js-test.html?1"</span>, responseBody = <span class="kw">true</span>))
+
+## {<span class="lit">"log"</span>:{<span class="lit">"browser"</span>:{<span class="lit">"version"</span>:<span class="lit">"602.1"</span>,<span class="lit">"comment"</span>:<span class="lit">"PyQt 5.9, Qt 5.9.1"</span>,<span class="lit">"name"</span>:<span class="lit">"QWebKit"</span>},<span class="lit">"pages"</span>:[{<span class="lit">"pageTimings"</span>:{<span class="lit">"_onPrepareStart"</span>:<span class="num">286</span>,<span class="lit">"_onStarted"</span>:<span class="num">1</span>,<span class="lit">"onContentLoad"</span>:<span class="num">285</span>,<span class="lit">"onLoad"</span>:<span class="num">286</span>},<span class="lit">"id"</span>:<span class="lit">"1"</span>,<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.550751Z"</span>}],<span class="lit">"version"</span>:<span class="lit">"1.2"</span>,<span class="lit">"creator"</span>:{<span class="lit">"version"</span>:<span class="lit">"3.2"</span>,<span class="lit">"name"</span>:<span class="lit">"Splash"</span>},<span class="lit">"entries"</span>:[{<span class="lit">"pageref"</span>:<span class="lit">"1"</span>,<span class="lit">"time"</span>:<span class="num">121</span>,<span class="lit">"timings"</span>:{<span class="lit">"connect"</span>:-<span class="num">1</span>,<span class="lit">"blocked"</span>:-<span class="num">1</span>,<span class="lit">"send"</span>:<span class="num">0</span>,<span class="lit">"ssl"</span>:-<span class="num">1</span>,<span class="lit">"receive"</span>:<span class="num">1</span>,<span class="lit">"dns"</span>:-<span class="num">1</span>,<span class="lit">"wait"</span>:<span class="num">120</span>},<span class="lit">"request"</span>:{<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>,<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) splash Version/9.0 Safari/602.1"</span>,<span class="lit">"name"</span>:<span class="lit">"User-Agent"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"</span>,<span class="lit">"name"</span>:<span class="lit">"Accept"</span>}],<span class="lit">"queryString"</span>:[{<span class="lit">"value"</span>:<span class="lit">""</span>,<span class="lit">"name"</span>:<span class="lit">"2"</span>}],<span class="lit">"method"</span>:<span class="lit">"GET"</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"headersSize"</span>:<span class="num">188</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"bodySize"</span>:-<span class="num">1</span>},<span class="lit">"cache"</span>:{},<span class="lit">"response"</span>:{<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"nginx/1.13.9"</span>,<span class="lit">"name"</span>:<span class="lit">"Server"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 22:20:16 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Date"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Type"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Last-Modified"</span>},{<span class="lit">"value"</span>:<span class="lit">"chunked"</span>,<span class="lit">"name"</span>:<span class="lit">"Transfer-Encoding"</span>},{<span class="lit">"value"</span>:<span class="lit">"keep-alive"</span>,<span class="lit">"name"</span>:<span class="lit">"Connection"</span>},{<span class="lit">"value"</span>:<span class="lit">"Accept-Encoding"</span>,<span class="lit">"name"</span>:<span class="lit">"Vary"</span>},{<span class="lit">"value"</span>:<span class="lit">"W/\"5b789454-15d\""</span>,<span class="lit">"name"</span>:<span class="lit">"ETag"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sun, 19 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Expires"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=84532"</span>,<span class="lit">"name"</span>:<span class="lit">"Cache-Control"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=31536000; includeSubDomains; preload"</span>,<span class="lit">"name"</span>:<span class="lit">"Strict-Transport-Security"</span>},{<span class="lit">"value"</span>:<span class="lit">"SAMEORIGIN"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Frame-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"<3"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Powered-By"</span>},{<span class="lit">"value"</span>:<span class="lit">"frame-ancestors 'self', default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-WebKit-CSP"</span>},{<span class="lit">"value"</span>:<span class="lit">"1; mode=block"</span>,<span class="lit">"name"</span>:<span class="lit">"X-XSS-Protection"</span>},{<span class="lit">"value"</span>:<span class="lit">"nosniff"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Type-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"gzip"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Encoding"</span>}],<span class="lit">"ok"</span>:<span class="kw">true</span>,<span class="lit">"redirectURL"</span>:<span class="lit">""</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"bodySize"</span>:<span class="num">349</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"status"</span>:<span class="num">200</span>,<span class="lit">"content"</span>:{<span class="lit">"encoding"</span>:<span class="lit">"base64"</span>,<span class="lit">"mimeType"</span>:<span class="lit">"text/html"</span>,<span class="lit">"text"</span>:<span class="lit">"PGh0bWw+CiAgPGhlYWQ+CiAgICA8dGl0bGU+VGVzdDwvdGl0bGU+CiAgPC9oZWFkPgogIDxib2R5IG9ubG9hZD0iYWRkRWxlbWVudHMoKSI+CiAgICA8cD5UaGlzIGlzIGEgU3BsYXNoIHRlc3QgcGFnZS48L3A+CiAgICA8cD48c3BhbiBpZD0idGFyZ2V0Ij48L3NwYW4+PC9wPgogICAgPHNjcmlwdD4KICAgICAgZnVuY3Rpb24gYWRkRWxlbWVudHMoKSB7CiAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInRhcmdldCIpLmlubmVySFRNTCA9ICJUaGlzIHdvbid0IGJlIGhlcmUgaWYgamF2YXNjcmlwdCBpcyBkaXNhYmxlZCIgOwogICAgICB9ICAgIAogICAgPC9zY3JpcHQ+CiAgPC9ib2R5Pgo8L2h0bWw+Cg=="</span>,<span class="lit">"size"</span>:<span class="num">349</span>},<span class="lit">"headersSize"</span>:<span class="num">971</span>,<span class="lit">"statusText"</span>:<span class="lit">"OK"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>},<span class="lit">"_splash_processing_state"</span>:<span class="lit">"finished"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.552544Z"</span>}]}}</pre></div><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="_root_">root</a></dd></dl></div>
+    </li><li name="_root_.splish" visbl="pub" class="indented1 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="splish"></a><a id="splish:splish"></a>
+      <span class="permalink">
+      <a href="index.html#splish" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="index.html"><span class="name">splish</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="_root_">root</a></dd></dl></div>
+    </li><li name="splish.SplashMain" visbl="pub" class="indented2 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="SplashMain"></a><a id="SplashMain:SplashMain"></a>
+      <span class="permalink">
+      <a href="../splish/index.html#SplashMain" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="SplashMain$.html"><span class="name">SplashMain</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="splish">splish</a></dd></dl></div>
+    </li><li class="current-entities indented2">
+                        <span class="separator"></span>
+                        <a class="class" href="" title=""></a>
+                        <a href="" title="">Config</a>
+                      </li>
+              </ul>
+            </div>
+          </div>
+          <div id="content">
+            <body class="class type">
+      <div id="definition">
+        <div class="big-circle class">c</div>
+        <p id="owner"><a href="index.html" class="extype" name="splish">splish</a>.<a href="SplashMain$.html" class="extype" name="splish.SplashMain">SplashMain</a></p>
+        <h1>Config<span class="permalink">
+      <a href="../splish/SplashMain$$Config.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span></h1>
+        <h3><span class="morelinks"></span></h3>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Config</span><span class="params">(<span name="host">host: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;localhost&quot;</span></span>, <span name="port">port: <span class="extype" name="java.lang.Integer">Integer</span> = <span class="symbol">8050</span></span>, <span name="user">user: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="pass">pass: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="ssl">ssl: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>, <span name="delay">delay: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">2.0</span></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">30.0</span></span>, <span name="render">render: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;html&quot;</span></span>, <span name="url">url: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span><span class="result"> extends <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a> with <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></span>
+      </span>
+      </h4>
+
+      
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <span class="toggle">
+            Linear Supertypes
+          </span>
+          <div class="superTypes hiddenContent"><a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a>, <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></div>
+        </div></div>
+        
+
+      <div id="mbrsel">
+        <div class="toggle"></div>
+        <div id="memberfilter">
+          <i class="material-icons arrow"></i>
+          <span class="input">
+            <input id="mbrsel-input" placeholder="Filter all members" type="text" accesskey="/" />
+          </span>
+          <i class="clear material-icons"></i>
+        </div>
+        <div id="filterby">
+          <div id="order">
+            <span class="filtertype">Ordering</span>
+            <ol>
+              
+              <li class="alpha in"><span>Alphabetic</span></li>
+              <li class="inherit out"><span>By Inheritance</span></li>
+            </ol>
+          </div>
+          <div class="ancestors">
+                  <span class="filtertype">Inherited<br />
+                  </span>
+                  <ol id="linearization">
+                    <li class="in" name="splish.SplashMain.Config"><span>Config</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="scala.Product"><span>Product</span></li><li class="in" name="scala.Equals"><span>Equals</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  </ol>
+                </div><div class="ancestors">
+              <span class="filtertype"></span>
+              <ol>
+                <li class="hideall out"><span>Hide All</span></li>
+                <li class="showall in"><span>Show All</span></li>
+              </ol>
+            </div>
+          <div id="visbl">
+              <span class="filtertype">Visibility</span>
+              <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+            </div>
+        </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        <div id="constructors" class="members">
+              <h3>Instance Constructors</h3>
+              <ol><li name="splish.SplashMain.Config#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="&lt;init&gt;(host:String,port:Integer,user:String,pass:String,ssl:Boolean,delay:Double,timeout:Double,render:String,url:String):splish.SplashMain.Config"></a><a id="&lt;init&gt;:Config"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#&lt;init&gt;(host:String,port:Integer,user:String,pass:String,ssl:Boolean,delay:Double,timeout:Double,render:String,url:String):splish.SplashMain.Config" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">new</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Config</span><span class="params">(<span name="host">host: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;localhost&quot;</span></span>, <span name="port">port: <span class="extype" name="java.lang.Integer">Integer</span> = <span class="symbol">8050</span></span>, <span name="user">user: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="pass">pass: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>, <span name="ssl">ssl: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a> = <span class="symbol">false</span></span>, <span name="delay">delay: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">2.0</span></span>, <span name="timeout">timeout: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a> = <span class="symbol">30.0</span></span>, <span name="render">render: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;html&quot;</span></span>, <span name="url">url: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">null</span></span>)</span>
+      </span>
+      
+      
+    </li></ol>
+            </div>
+
+        
+
+        
+
+        <div class="values members">
+              <h3>Value Members</h3>
+              <ol>
+                <li name="scala.AnyRef#!=" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="!=(x$1:Any):Boolean"></a><a id="!=(Any):Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#!=(x$1:Any):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $bang$eq" class="name">!=</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef###" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="##():Int"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html###():Int" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $hash$hash" class="name">##</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.AnyRef#==" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="==(x$1:Any):Boolean"></a><a id="==(Any):Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#==(x$1:Any):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span title="gt4s: $eq$eq" class="name">==</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
+    </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="asInstanceOf[T0]:T0"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#asInstanceOf[T0]:T0" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">asInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <span class="extype" name="scala.Any.asInstanceOf.T0">T0</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#clone" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="clone():Object"></a><a id="clone():AnyRef"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#clone():Object" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">clone</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.CloneNotSupportedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="splish.SplashMain.Config#delay" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="delay:Double"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#delay:Double" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">delay</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>
+      </span>
+      
+      
+    </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#eq(x$1:AnyRef):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">eq</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="finalize():Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#finalize():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">finalize</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Attributes</dt><dd>protected[<a href="../java/lang/index.html" class="extype" name="java.lang">java.lang</a>] </dd><dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="symbol">classOf[java.lang.Throwable]</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#getClass" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="getClass():Class[_]"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#getClass():Class[_]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">getClass</span><span class="params">()</span><span class="result">: <span class="extype" name="java.lang.Class">Class</span>[_]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="splish.SplashMain.Config#host" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="host:String"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#host:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">host</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="isInstanceOf[T0]:Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#isInstanceOf[T0]:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">isInstanceOf</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
+    </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#ne(x$1:AnyRef):Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ne</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="scala.AnyRef#notify" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notify():Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#notify():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notify</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#notifyAll" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="notifyAll():Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#notifyAll():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">notifyAll</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+        </dd></dl></div>
+    </li><li name="splish.SplashMain.Config#pass" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="pass:String"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#pass:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">pass</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="splish.SplashMain.Config#port" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="port:Integer"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#port:Integer" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">port</span><span class="result">: <span class="extype" name="java.lang.Integer">Integer</span></span>
+      </span>
+      
+      
+    </li><li name="splish.SplashMain.Config#render" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="render:String"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#render:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">render</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="splish.SplashMain.Config#ssl" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ssl:Boolean"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#ssl:Boolean" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ssl</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Boolean.html#scala.Boolean" class="extype" name="scala.Boolean">Boolean</a></span>
+      </span>
+      
+      
+    </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#synchronized[T0](x$1:=&gt;T0):T0" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">synchronized</span><span class="tparams">[<span name="T0">T0</span>]</span><span class="params">(<span name="arg0">arg0: ⇒ <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>)</span><span class="result">: <span class="extype" name="java.lang.AnyRef.synchronized.T0">T0</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="splish.SplashMain.Config#timeout" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="timeout:Double"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#timeout:Double" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">timeout</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Double.html#scala.Double" class="extype" name="scala.Double">Double</a></span>
+      </span>
+      
+      
+    </li><li name="splish.SplashMain.Config#url" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="url:String"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#url:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">url</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="splish.SplashMain.Config#user" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="user:String"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#user:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">user</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait():Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#wait():Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">()</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long,x$2:Int):Unit"></a><a id="wait(Long,Int):Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#wait(x$1:Long,x$2:Int):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>, <span name="arg1">arg1: <a href="http://www.scala-lang.org/api/2.12.6/scala/Int.html#scala.Int" class="extype" name="scala.Int">Int</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="wait(x$1:Long):Unit"></a><a id="wait(Long):Unit"></a>
+      <span class="permalink">
+      <a href="../splish/SplashMain$$Config.html#wait(x$1:Long):Unit" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">def</span>
+      </span>
+      <span class="symbol">
+        <span class="name">wait</span><span class="params">(<span name="arg0">arg0: <a href="http://www.scala-lang.org/api/2.12.6/scala/Long.html#scala.Long" class="extype" name="scala.Long">Long</a></span>)</span><span class="result">: <a href="http://www.scala-lang.org/api/2.12.6/scala/Unit.html#scala.Unit" class="extype" name="scala.Unit">Unit</a></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd><dt>Annotations</dt><dd>
+                <span class="name">@native</span><span class="args">()</span>
+              
+                <span class="name">@throws</span><span class="args">(<span>
+      
+      <span class="defval" name="classOf[java.lang.InterruptedException]">...</span>
+    </span>)</span>
+              
+        </dd></dl></div>
+    </li>
+              </ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Serializable.html#scala.Serializable" class="extype" name="scala.Serializable">Serializable</a></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="scala.Product">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Product.html#scala.Product" class="extype" name="scala.Product">Product</a></h3>
+            </div><div class="parent" name="scala.Equals">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Equals.html#scala.Equals" class="extype" name="scala.Equals">Equals</a></h3>
+            </div><div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/AnyRef.html#scala.AnyRef" class="extype" name="scala.AnyRef">AnyRef</a></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <a href="http://www.scala-lang.org/api/2.12.6/scala/Any.html#scala.Any" class="extype" name="scala.Any">Any</a></h3>
+            </div>
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+    </body>
+          </div>
+        </div>
+      </div>
+    </body>
+      </html>

@@ -53,7 +53,7 @@
             <div id="packages">
               <h1>Packages</h1>
               <ul>
-                <li name="_root_.root" visbl="pub" class="indented0 current" data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="_root_.root" visbl="pub" class="indented0 current" data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="_root_"></a><a id="root:_root_"></a>
       <span class="permalink">
       <a href="index.html#_root_" title="Permalink">
@@ -68,11 +68,95 @@
         <span class="name">root</span>
       </span>
       
-      
-    </li><li name="_root_.splash" visbl="pub" class="indented1 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="splash"></a><a id="splash:splash"></a>
+      <p class="shortcomment cmt">This is the documentation for the <code>splish</code> library.</p><div class="fullcomment"><div class="comment cmt"><p>This is the documentation for the <code>splish</code> library.</p><h4> Package Information </h4><p>The <a href="splish/index.html" class="extype" name="splish">splish</a> package contains a single class <a href="splish/Splash.html" class="extype" name="splish.Splash">splish.Splash</a> with methods for interacting with a <a href="https://splash.readthedocs.io/en/stable/index.html" target="_blank">ScrapingHub Splash</a> instance.</p><p>If you haven’t hit the above link yet and are unfamilar with Splash, the
+TLDR is that it’s an alternative to Selenium in that it’s a full browser
+and executes javascript. The full rendering engine is based on Qt Webkit
+and Splash instances have a REST API that provides a ton of flexibility
+when needed and ease of use for more casual scraping tasks.</p><p>You can get it up and running locally with Docker via:</p><p>    sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash</p><p>If you've built the source and run <code>sbt packInstall</code>, you can start playing
+with <code>splash</code> on the command line via <code>~/local/bin/splash-main</code>. Here's the help:</p><pre>splash <span class="num">1.0</span>
+Usage: splash [options] url
+
+  url                    the URL to scrape
+  -r, --render html      request action; one of <span class="lit">'html'</span>, <span class="lit">'json'</span> or <span class="lit">'har'</span>
+  --help                 prints <span class="kw">this</span> usage text
+  -w, --wait &lt;value&gt;     How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is <span class="num">2</span> seconds
+  -t, --timeout &lt;value&gt;  Overall page/connection timeout. Defaults to <span class="num">30</span> seconds
+  -h, --host &lt;value&gt;     Splash instance host name or IP address (defaults to localhost)
+  -p, --port &lt;value&gt;     Splash instance port <span class="kw">if</span> not the default (<span class="num">8050</span>)
+  -u, --user &lt;value&gt;     Splash username (<span class="kw">if</span> authentication is required). Default is no authentcation.
+  -p, --pass &lt;value&gt;     Splash password (<span class="kw">if</span> authentication is required). Default is no authentication.
+  -s, --ssl              Use an SSL connection to the Splash instance? (defaults to <span class="kw">false</span>)</pre><p>The first thing we need to do is make a connection to the server</p><pre><span class="kw">import</span> splish.Splash
+
+<span class="kw">val</span> s = Splash()
+
+println(s)
+
+## Splash(localhost,<span class="num">8050</span>,<span class="kw">null</span>,<span class="kw">null</span>,<span class="kw">false</span>)</pre><p>We can test that connection and get some other information as well:</p><pre>println(
+  <span class="lit">"Server is up? "</span> + s.isActive() + <span class="lit">"\n"</span> +
+  <span class="lit">"What's the server version? "</span> + s.version()(<span class="lit">"splash"</span>) + <span class="lit">"\n"</span> +
+  <span class="lit">"How long has the server been up? "</span> + s.performanceStatistics()(<span class="lit">"cputime"</span>).num
+)
+
+## Server is up? <span class="kw">true</span>
+## What's the server version? <span class="lit">"3.2"</span>
+## How long has the server been up? <span class="num">68.84</span></pre><p>The library makes use of
+[<code>uJson</code>](http://www.lihaoyi.com/upickle/#uJson) for more complex return
+types and a few methods return a <code>requests</code>
+[<code>Response</code>](https://github.com/lihaoyi/requests-scala/blob/master/requests/src/requests/Model.scala#L235-L276)
+object due to the result of a call to more dynamic endpoints being
+un-knowable at call time (Splash allows you to use <code>Lua</code> to perform
+complex page interaction and you can return images, plaintext, HTML or
+JSON via the Lua interface).</p><p>The classic use case for Splash is to feed it a URL and get HTML back
+after it’s had time to process any javascript. The URL in the following
+example relies on javascript to add content to the page:</p><pre><span class="kw">val</span> html = s.renderHTML(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(html)
+
+## &lt;html&gt;&lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;This won't be here <span class="kw">if</span> javascript is disabled&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##
+##
+## &lt;/body&gt;&lt;/html&gt;</pre><p>Here’s what that looks like just using the <code>requests</code> library:</p><pre><span class="kw">import</span> requests._
+
+<span class="kw">val</span> res = requests.get(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(res.text)
+
+## &lt;html&gt;
+##   &lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##   &lt;/body&gt;
+## &lt;/html&gt;</pre><p>Most of the other Splash API endpoints have corresponding methods in the
+library (the image-oriented ones are on the TODO list). We can get the
+same page in both Splash
+JSON:</p><pre>println(s.renderJSON(<span class="lit">"https://rud.is/splash-js-test.html"</span>, responseBody = <span class="kw">true</span>, html = <span class="kw">true</span>))
+
+## {<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"requestedUrl"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"geometry"</span>:[<span class="num">0</span>,<span class="num">0</span>,<span class="num">1024</span>,<span class="num">768</span>],<span class="lit">"html"</span>:<span class="lit">"<html><head>\n    <title>Test</title>\n  </head>\n  <body onload=\"addElements()\">\n    < p>This is a Splash test page.\n    < p><span id=\"target\">This won't be here if javascript is disabled</span>\n    <script>\n      function addElements() {\n        document.getElementById(\"target\").innerHTML = \"This won't be here if javascript is disabled\" ;\n      }    \n    </script>\n  \n\n</body></html>"</span>}</pre><p>and HAR
+formats:</p><pre>println(s.renderHAR(<span class="lit">"https://rud.is/splash-js-test.html?1"</span>, responseBody = <span class="kw">true</span>))
+
+## {<span class="lit">"log"</span>:{<span class="lit">"browser"</span>:{<span class="lit">"version"</span>:<span class="lit">"602.1"</span>,<span class="lit">"comment"</span>:<span class="lit">"PyQt 5.9, Qt 5.9.1"</span>,<span class="lit">"name"</span>:<span class="lit">"QWebKit"</span>},<span class="lit">"pages"</span>:[{<span class="lit">"pageTimings"</span>:{<span class="lit">"_onPrepareStart"</span>:<span class="num">286</span>,<span class="lit">"_onStarted"</span>:<span class="num">1</span>,<span class="lit">"onContentLoad"</span>:<span class="num">285</span>,<span class="lit">"onLoad"</span>:<span class="num">286</span>},<span class="lit">"id"</span>:<span class="lit">"1"</span>,<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.550751Z"</span>}],<span class="lit">"version"</span>:<span class="lit">"1.2"</span>,<span class="lit">"creator"</span>:{<span class="lit">"version"</span>:<span class="lit">"3.2"</span>,<span class="lit">"name"</span>:<span class="lit">"Splash"</span>},<span class="lit">"entries"</span>:[{<span class="lit">"pageref"</span>:<span class="lit">"1"</span>,<span class="lit">"time"</span>:<span class="num">121</span>,<span class="lit">"timings"</span>:{<span class="lit">"connect"</span>:-<span class="num">1</span>,<span class="lit">"blocked"</span>:-<span class="num">1</span>,<span class="lit">"send"</span>:<span class="num">0</span>,<span class="lit">"ssl"</span>:-<span class="num">1</span>,<span class="lit">"receive"</span>:<span class="num">1</span>,<span class="lit">"dns"</span>:-<span class="num">1</span>,<span class="lit">"wait"</span>:<span class="num">120</span>},<span class="lit">"request"</span>:{<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>,<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) splash Version/9.0 Safari/602.1"</span>,<span class="lit">"name"</span>:<span class="lit">"User-Agent"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"</span>,<span class="lit">"name"</span>:<span class="lit">"Accept"</span>}],<span class="lit">"queryString"</span>:[{<span class="lit">"value"</span>:<span class="lit">""</span>,<span class="lit">"name"</span>:<span class="lit">"2"</span>}],<span class="lit">"method"</span>:<span class="lit">"GET"</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"headersSize"</span>:<span class="num">188</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"bodySize"</span>:-<span class="num">1</span>},<span class="lit">"cache"</span>:{},<span class="lit">"response"</span>:{<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"nginx/1.13.9"</span>,<span class="lit">"name"</span>:<span class="lit">"Server"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 22:20:16 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Date"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Type"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Last-Modified"</span>},{<span class="lit">"value"</span>:<span class="lit">"chunked"</span>,<span class="lit">"name"</span>:<span class="lit">"Transfer-Encoding"</span>},{<span class="lit">"value"</span>:<span class="lit">"keep-alive"</span>,<span class="lit">"name"</span>:<span class="lit">"Connection"</span>},{<span class="lit">"value"</span>:<span class="lit">"Accept-Encoding"</span>,<span class="lit">"name"</span>:<span class="lit">"Vary"</span>},{<span class="lit">"value"</span>:<span class="lit">"W/\"5b789454-15d\""</span>,<span class="lit">"name"</span>:<span class="lit">"ETag"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sun, 19 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Expires"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=84532"</span>,<span class="lit">"name"</span>:<span class="lit">"Cache-Control"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=31536000; includeSubDomains; preload"</span>,<span class="lit">"name"</span>:<span class="lit">"Strict-Transport-Security"</span>},{<span class="lit">"value"</span>:<span class="lit">"SAMEORIGIN"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Frame-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"<3"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Powered-By"</span>},{<span class="lit">"value"</span>:<span class="lit">"frame-ancestors 'self', default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-WebKit-CSP"</span>},{<span class="lit">"value"</span>:<span class="lit">"1; mode=block"</span>,<span class="lit">"name"</span>:<span class="lit">"X-XSS-Protection"</span>},{<span class="lit">"value"</span>:<span class="lit">"nosniff"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Type-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"gzip"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Encoding"</span>}],<span class="lit">"ok"</span>:<span class="kw">true</span>,<span class="lit">"redirectURL"</span>:<span class="lit">""</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"bodySize"</span>:<span class="num">349</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"status"</span>:<span class="num">200</span>,<span class="lit">"content"</span>:{<span class="lit">"encoding"</span>:<span class="lit">"base64"</span>,<span class="lit">"mimeType"</span>:<span class="lit">"text/html"</span>,<span class="lit">"text"</span>:<span class="lit">"PGh0bWw+CiAgPGhlYWQ+CiAgICA8dGl0bGU+VGVzdDwvdGl0bGU+CiAgPC9oZWFkPgogIDxib2R5IG9ubG9hZD0iYWRkRWxlbWVudHMoKSI+CiAgICA8cD5UaGlzIGlzIGEgU3BsYXNoIHRlc3QgcGFnZS48L3A+CiAgICA8cD48c3BhbiBpZD0idGFyZ2V0Ij48L3NwYW4+PC9wPgogICAgPHNjcmlwdD4KICAgICAgZnVuY3Rpb24gYWRkRWxlbWVudHMoKSB7CiAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInRhcmdldCIpLmlubmVySFRNTCA9ICJUaGlzIHdvbid0IGJlIGhlcmUgaWYgamF2YXNjcmlwdCBpcyBkaXNhYmxlZCIgOwogICAgICB9ICAgIAogICAgPC9zY3JpcHQ+CiAgPC9ib2R5Pgo8L2h0bWw+Cg=="</span>,<span class="lit">"size"</span>:<span class="num">349</span>},<span class="lit">"headersSize"</span>:<span class="num">971</span>,<span class="lit">"statusText"</span>:<span class="lit">"OK"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>},<span class="lit">"_splash_processing_state"</span>:<span class="lit">"finished"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.552544Z"</span>}]}}</pre></div></div>
+    </li><li name="_root_.splish" visbl="pub" class="indented1 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="splish"></a><a id="splish:splish"></a>
       <span class="permalink">
-      <a href="index.html#splash" title="Permalink">
+      <a href="index.html#splish" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -81,7 +165,7 @@
         <span class="kind">package</span>
       </span>
       <span class="symbol">
-        <a title="" href="splash/index.html"><span class="name">splash</span></a>
+        <a title="" href="splish/index.html"><span class="name">splish</span></a>
       </span>
       
       
@@ -113,7 +197,91 @@
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"></div>
+          <div id="comment" class="fullcommenttop"><div class="comment cmt"><p>This is the documentation for the <code>splish</code> library.</p><h4> Package Information </h4><p>The <a href="splish/index.html" class="extype" name="splish">splish</a> package contains a single class <a href="splish/Splash.html" class="extype" name="splish.Splash">splish.Splash</a> with methods for interacting with a <a href="https://splash.readthedocs.io/en/stable/index.html" target="_blank">ScrapingHub Splash</a> instance.</p><p>If you haven’t hit the above link yet and are unfamilar with Splash, the
+TLDR is that it’s an alternative to Selenium in that it’s a full browser
+and executes javascript. The full rendering engine is based on Qt Webkit
+and Splash instances have a REST API that provides a ton of flexibility
+when needed and ease of use for more casual scraping tasks.</p><p>You can get it up and running locally with Docker via:</p><p>    sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash</p><p>If you've built the source and run <code>sbt packInstall</code>, you can start playing
+with <code>splash</code> on the command line via <code>~/local/bin/splash-main</code>. Here's the help:</p><pre>splash <span class="num">1.0</span>
+Usage: splash [options] url
+
+  url                    the URL to scrape
+  -r, --render html      request action; one of <span class="lit">'html'</span>, <span class="lit">'json'</span> or <span class="lit">'har'</span>
+  --help                 prints <span class="kw">this</span> usage text
+  -w, --wait &lt;value&gt;     How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is <span class="num">2</span> seconds
+  -t, --timeout &lt;value&gt;  Overall page/connection timeout. Defaults to <span class="num">30</span> seconds
+  -h, --host &lt;value&gt;     Splash instance host name or IP address (defaults to localhost)
+  -p, --port &lt;value&gt;     Splash instance port <span class="kw">if</span> not the default (<span class="num">8050</span>)
+  -u, --user &lt;value&gt;     Splash username (<span class="kw">if</span> authentication is required). Default is no authentcation.
+  -p, --pass &lt;value&gt;     Splash password (<span class="kw">if</span> authentication is required). Default is no authentication.
+  -s, --ssl              Use an SSL connection to the Splash instance? (defaults to <span class="kw">false</span>)</pre><p>The first thing we need to do is make a connection to the server</p><pre><span class="kw">import</span> splish.Splash
+
+<span class="kw">val</span> s = Splash()
+
+println(s)
+
+## Splash(localhost,<span class="num">8050</span>,<span class="kw">null</span>,<span class="kw">null</span>,<span class="kw">false</span>)</pre><p>We can test that connection and get some other information as well:</p><pre>println(
+  <span class="lit">"Server is up? "</span> + s.isActive() + <span class="lit">"\n"</span> +
+  <span class="lit">"What's the server version? "</span> + s.version()(<span class="lit">"splash"</span>) + <span class="lit">"\n"</span> +
+  <span class="lit">"How long has the server been up? "</span> + s.performanceStatistics()(<span class="lit">"cputime"</span>).num
+)
+
+## Server is up? <span class="kw">true</span>
+## What's the server version? <span class="lit">"3.2"</span>
+## How long has the server been up? <span class="num">68.84</span></pre><p>The library makes use of
+[<code>uJson</code>](http://www.lihaoyi.com/upickle/#uJson) for more complex return
+types and a few methods return a <code>requests</code>
+[<code>Response</code>](https://github.com/lihaoyi/requests-scala/blob/master/requests/src/requests/Model.scala#L235-L276)
+object due to the result of a call to more dynamic endpoints being
+un-knowable at call time (Splash allows you to use <code>Lua</code> to perform
+complex page interaction and you can return images, plaintext, HTML or
+JSON via the Lua interface).</p><p>The classic use case for Splash is to feed it a URL and get HTML back
+after it’s had time to process any javascript. The URL in the following
+example relies on javascript to add content to the page:</p><pre><span class="kw">val</span> html = s.renderHTML(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(html)
+
+## &lt;html&gt;&lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;This won't be here <span class="kw">if</span> javascript is disabled&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##
+##
+## &lt;/body&gt;&lt;/html&gt;</pre><p>Here’s what that looks like just using the <code>requests</code> library:</p><pre><span class="kw">import</span> requests._
+
+<span class="kw">val</span> res = requests.get(<span class="lit">"https://rud.is/splash-js-test.html"</span>)
+
+println(res.text)
+
+## &lt;html&gt;
+##   &lt;head&gt;
+##     &lt;title&gt;Test&lt;/title&gt;
+##   &lt;/head&gt;
+##   &lt;body onload=<span class="lit">"addElements()"</span>&gt;
+##     &lt; p&gt;This is a Splash test page.
+##     &lt; p&gt;&lt;span id=<span class="lit">"target"</span>&gt;&lt;/span&gt;
+##     &lt;script&gt;
+##       function addElements() {
+##         document.getElementById(<span class="lit">"target"</span>).innerHTML = <span class="lit">"This won't be here if javascript is disabled"</span> ;
+##       }
+##     &lt;/script&gt;
+##   &lt;/body&gt;
+## &lt;/html&gt;</pre><p>Most of the other Splash API endpoints have corresponding methods in the
+library (the image-oriented ones are on the TODO list). We can get the
+same page in both Splash
+JSON:</p><pre>println(s.renderJSON(<span class="lit">"https://rud.is/splash-js-test.html"</span>, responseBody = <span class="kw">true</span>, html = <span class="kw">true</span>))
+
+## {<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"requestedUrl"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html"</span>,<span class="lit">"geometry"</span>:[<span class="num">0</span>,<span class="num">0</span>,<span class="num">1024</span>,<span class="num">768</span>],<span class="lit">"html"</span>:<span class="lit">"<html><head>\n    <title>Test</title>\n  </head>\n  <body onload=\"addElements()\">\n    < p>This is a Splash test page.\n    < p><span id=\"target\">This won't be here if javascript is disabled</span>\n    <script>\n      function addElements() {\n        document.getElementById(\"target\").innerHTML = \"This won't be here if javascript is disabled\" ;\n      }    \n    </script>\n  \n\n</body></html>"</span>}</pre><p>and HAR
+formats:</p><pre>println(s.renderHAR(<span class="lit">"https://rud.is/splash-js-test.html?1"</span>, responseBody = <span class="kw">true</span>))
+
+## {<span class="lit">"log"</span>:{<span class="lit">"browser"</span>:{<span class="lit">"version"</span>:<span class="lit">"602.1"</span>,<span class="lit">"comment"</span>:<span class="lit">"PyQt 5.9, Qt 5.9.1"</span>,<span class="lit">"name"</span>:<span class="lit">"QWebKit"</span>},<span class="lit">"pages"</span>:[{<span class="lit">"pageTimings"</span>:{<span class="lit">"_onPrepareStart"</span>:<span class="num">286</span>,<span class="lit">"_onStarted"</span>:<span class="num">1</span>,<span class="lit">"onContentLoad"</span>:<span class="num">285</span>,<span class="lit">"onLoad"</span>:<span class="num">286</span>},<span class="lit">"id"</span>:<span class="lit">"1"</span>,<span class="lit">"title"</span>:<span class="lit">"Test"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.550751Z"</span>}],<span class="lit">"version"</span>:<span class="lit">"1.2"</span>,<span class="lit">"creator"</span>:{<span class="lit">"version"</span>:<span class="lit">"3.2"</span>,<span class="lit">"name"</span>:<span class="lit">"Splash"</span>},<span class="lit">"entries"</span>:[{<span class="lit">"pageref"</span>:<span class="lit">"1"</span>,<span class="lit">"time"</span>:<span class="num">121</span>,<span class="lit">"timings"</span>:{<span class="lit">"connect"</span>:-<span class="num">1</span>,<span class="lit">"blocked"</span>:-<span class="num">1</span>,<span class="lit">"send"</span>:<span class="num">0</span>,<span class="lit">"ssl"</span>:-<span class="num">1</span>,<span class="lit">"receive"</span>:<span class="num">1</span>,<span class="lit">"dns"</span>:-<span class="num">1</span>,<span class="lit">"wait"</span>:<span class="num">120</span>},<span class="lit">"request"</span>:{<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>,<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) splash Version/9.0 Safari/602.1"</span>,<span class="lit">"name"</span>:<span class="lit">"User-Agent"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"</span>,<span class="lit">"name"</span>:<span class="lit">"Accept"</span>}],<span class="lit">"queryString"</span>:[{<span class="lit">"value"</span>:<span class="lit">""</span>,<span class="lit">"name"</span>:<span class="lit">"2"</span>}],<span class="lit">"method"</span>:<span class="lit">"GET"</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"headersSize"</span>:<span class="num">188</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"bodySize"</span>:-<span class="num">1</span>},<span class="lit">"cache"</span>:{},<span class="lit">"response"</span>:{<span class="lit">"headers"</span>:[{<span class="lit">"value"</span>:<span class="lit">"nginx/1.13.9"</span>,<span class="lit">"name"</span>:<span class="lit">"Server"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 22:20:16 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Date"</span>},{<span class="lit">"value"</span>:<span class="lit">"text/html"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Type"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sat, 18 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Last-Modified"</span>},{<span class="lit">"value"</span>:<span class="lit">"chunked"</span>,<span class="lit">"name"</span>:<span class="lit">"Transfer-Encoding"</span>},{<span class="lit">"value"</span>:<span class="lit">"keep-alive"</span>,<span class="lit">"name"</span>:<span class="lit">"Connection"</span>},{<span class="lit">"value"</span>:<span class="lit">"Accept-Encoding"</span>,<span class="lit">"name"</span>:<span class="lit">"Vary"</span>},{<span class="lit">"value"</span>:<span class="lit">"W/\"5b789454-15d\""</span>,<span class="lit">"name"</span>:<span class="lit">"ETag"</span>},{<span class="lit">"value"</span>:<span class="lit">"Sun, 19 Aug 2018 21:49:08 GMT"</span>,<span class="lit">"name"</span>:<span class="lit">"Expires"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=84532"</span>,<span class="lit">"name"</span>:<span class="lit">"Cache-Control"</span>},{<span class="lit">"value"</span>:<span class="lit">"max-age=31536000; includeSubDomains; preload"</span>,<span class="lit">"name"</span>:<span class="lit">"Strict-Transport-Security"</span>},{<span class="lit">"value"</span>:<span class="lit">"SAMEORIGIN"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Frame-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"<3"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Powered-By"</span>},{<span class="lit">"value"</span>:<span class="lit">"frame-ancestors 'self', default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Security-Policy"</span>},{<span class="lit">"value"</span>:<span class="lit">"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';"</span>,<span class="lit">"name"</span>:<span class="lit">"X-WebKit-CSP"</span>},{<span class="lit">"value"</span>:<span class="lit">"1; mode=block"</span>,<span class="lit">"name"</span>:<span class="lit">"X-XSS-Protection"</span>},{<span class="lit">"value"</span>:<span class="lit">"nosniff"</span>,<span class="lit">"name"</span>:<span class="lit">"X-Content-Type-Options"</span>},{<span class="lit">"value"</span>:<span class="lit">"gzip"</span>,<span class="lit">"name"</span>:<span class="lit">"Content-Encoding"</span>}],<span class="lit">"ok"</span>:<span class="kw">true</span>,<span class="lit">"redirectURL"</span>:<span class="lit">""</span>,<span class="lit">"httpVersion"</span>:<span class="lit">"HTTP/1.1"</span>,<span class="lit">"bodySize"</span>:<span class="num">349</span>,<span class="lit">"cookies"</span>:[],<span class="lit">"status"</span>:<span class="num">200</span>,<span class="lit">"content"</span>:{<span class="lit">"encoding"</span>:<span class="lit">"base64"</span>,<span class="lit">"mimeType"</span>:<span class="lit">"text/html"</span>,<span class="lit">"text"</span>:<span class="lit">"PGh0bWw+CiAgPGhlYWQ+CiAgICA8dGl0bGU+VGVzdDwvdGl0bGU+CiAgPC9oZWFkPgogIDxib2R5IG9ubG9hZD0iYWRkRWxlbWVudHMoKSI+CiAgICA8cD5UaGlzIGlzIGEgU3BsYXNoIHRlc3QgcGFnZS48L3A+CiAgICA8cD48c3BhbiBpZD0idGFyZ2V0Ij48L3NwYW4+PC9wPgogICAgPHNjcmlwdD4KICAgICAgZnVuY3Rpb24gYWRkRWxlbWVudHMoKSB7CiAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInRhcmdldCIpLmlubmVySFRNTCA9ICJUaGlzIHdvbid0IGJlIGhlcmUgaWYgamF2YXNjcmlwdCBpcyBkaXNhYmxlZCIgOwogICAgICB9ICAgIAogICAgPC9zY3JpcHQ+CiAgPC9ib2R5Pgo8L2h0bWw+Cg=="</span>,<span class="lit">"size"</span>:<span class="num">349</span>},<span class="lit">"headersSize"</span>:<span class="num">971</span>,<span class="lit">"statusText"</span>:<span class="lit">"OK"</span>,<span class="lit">"url"</span>:<span class="lit">"https://rud.is/splash-js-test.html?2"</span>},<span class="lit">"_splash_processing_state"</span>:<span class="lit">"finished"</span>,<span class="lit">"startedDateTime"</span>:<span class="lit">"2018-08-18T22:27:57.552544Z"</span>}]}}</pre></div></div>
         
 
       

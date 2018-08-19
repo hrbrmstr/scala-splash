@@ -10,9 +10,9 @@ import ujson.Js
 /**
  * A class to facilitate access to a Splash instance.
  *
- * Splash is a javascript rendering service. It’s a lightweight web browser with an HTTP API, implemented in Python 3 using Twisted 
- * and QT5. The (twisted) QT reactor is used to make the service fully asynchronous allowing to take advantage of webkit concurrency \
- * via QT main loop.
+ * Splash is a javascript rendering service. It’s a lightweight web browser with an HTTP API, 
+ * implemented in Python 3 using Twisted and QT5. The (twisted) QT reactor is used to make the 
+ * service fully asynchronous allowing to take advantage of webkit concurrency via the QT main loop.
  * 
  * @param splashHost the host name or IP address of the Splash instance. Defaults to "`localhost`" 
  * @param splashPort the port number the Splash instance is running on. Defaults to `8050`

@@ -33,3 +33,9 @@ retrieveManaged := true
 enablePlugins(PackPlugin)
 
 packJarNameConvention := "default"
+
+autoAPIMappings := true
+
+target in Compile in doc := baseDirectory.value / "docs"
+ scalacOptions in Compile ++= Seq("-doc-root-content", "rootdoc.txt")
+

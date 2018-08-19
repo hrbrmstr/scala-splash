@@ -1,0 +1,139 @@
+This is the documentation for the `splish` library.
+
+== Package Information ==
+
+The [[splish]] package contains a single class [[splish.Splash]] with methods for interacting with a [[https://splash.readthedocs.io/en/stable/index.html ScrapingHub Splash]] instance.
+
+If you haven’t hit the above link yet and are unfamilar with Splash, the
+TLDR is that it’s an alternative to Selenium in that it’s a full browser
+and executes javascript. The full rendering engine is based on Qt Webkit
+and Splash instances have a REST API that provides a ton of flexibility
+when needed and ease of use for more casual scraping tasks.
+
+You can get it up and running locally with Docker via:
+
+    sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash
+
+If you've built the source and run `sbt packInstall`, you can start playing
+with `splash` on the command line via `~/local/bin/splash-main`. Here's the help:
+
+{{{
+splash 1.0
+Usage: splash [options] url
+
+  url                    the URL to scrape
+  -r, --render html      request action; one of 'html', 'json' or 'har'
+  --help                 prints this usage text
+  -w, --wait <value>     How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is 2 seconds
+  -t, --timeout <value>  Overall page/connection timeout. Defaults to 30 seconds
+  -h, --host <value>     Splash instance host name or IP address (defaults to localhost)
+  -p, --port <value>     Splash instance port if not the default (8050)
+  -u, --user <value>     Splash username (if authentication is required). Default is no authentcation.
+  -p, --pass <value>     Splash password (if authentication is required). Default is no authentication.
+  -s, --ssl              Use an SSL connection to the Splash instance? (defaults to false)
+}}}
+
+The first thing we need to do is make a connection to the server
+
+{{{
+import splish.Splash
+
+val s = Splash()
+
+println(s)
+
+## Splash(localhost,8050,null,null,false)
+}}}
+
+We can test that connection and get some other information as well:
+
+{{{
+println(
+  "Server is up? " + s.isActive() + "\n" +
+  "What's the server version? " + s.version()("splash") + "\n" +
+  "How long has the server been up? " + s.performanceStatistics()("cputime").num
+)
+
+## Server is up? true
+## What's the server version? "3.2"
+## How long has the server been up? 68.84
+}}}
+
+The library makes use of
+[`uJson`](http://www.lihaoyi.com/upickle/#uJson) for more complex return
+types and a few methods return a `requests`
+[`Response`](https://github.com/lihaoyi/requests-scala/blob/master/requests/src/requests/Model.scala#L235-L276)
+object due to the result of a call to more dynamic endpoints being
+un-knowable at call time (Splash allows you to use `Lua` to perform
+complex page interaction and you can return images, plaintext, HTML or
+JSON via the Lua interface).
+
+The classic use case for Splash is to feed it a URL and get HTML back
+after it’s had time to process any javascript. The URL in the following
+example relies on javascript to add content to the page:
+
+{{{
+val html = s.renderHTML("https://rud.is/splash-js-test.html")
+
+println(html)
+
+## <html><head>
+##     <title>Test</title>
+##   </head>
+##   <body onload="addElements()">
+##     < p>This is a Splash test page.</p>
+##     < p><span id="target">This won't be here if javascript is disabled</span></p>
+##     <script>
+##       function addElements() {
+##         document.getElementById("target").innerHTML = "This won't be here if javascript is disabled" ;
+##       }    
+##     </script>
+##   
+## 
+## </body></html>
+}}}
+
+Here’s what that looks like just using the `requests` library:
+
+{{{
+import requests._
+
+val res = requests.get("https://rud.is/splash-js-test.html")
+
+println(res.text)
+
+## <html>
+##   <head>
+##     <title>Test</title>
+##   </head>
+##   <body onload="addElements()">
+##     < p>This is a Splash test page.</p>
+##     < p><span id="target"></span></p>
+##     <script>
+##       function addElements() {
+##         document.getElementById("target").innerHTML = "This won't be here if javascript is disabled" ;
+##       }    
+##     </script>
+##   </body>
+## </html>
+}}}
+
+Most of the other Splash API endpoints have corresponding methods in the
+library (the image-oriented ones are on the TODO list). We can get the
+same page in both Splash
+JSON:
+
+{{{
+println(s.renderJSON("https://rud.is/splash-js-test.html", responseBody = true, html = true))
+
+## {"title":"Test","requestedUrl":"https://rud.is/splash-js-test.html","url":"https://rud.is/splash-js-test.html","geometry":[0,0,1024,768],"html":"<html><head>\n    <title>Test</title>\n  </head>\n  <body onload=\"addElements()\">\n    < p>This is a Splash test page.</p>\n    < p><span id=\"target\">This won't be here if javascript is disabled</span></p>\n    <script>\n      function addElements() {\n        document.getElementById(\"target\").innerHTML = \"This won't be here if javascript is disabled\" ;\n      }    \n    </script>\n  \n\n</body></html>"}
+}}}
+
+and HAR
+formats:
+
+{{{
+println(s.renderHAR("https://rud.is/splash-js-test.html?1", responseBody = true))
+
+## {"log":{"browser":{"version":"602.1","comment":"PyQt 5.9, Qt 5.9.1","name":"QWebKit"},"pages":[{"pageTimings":{"_onPrepareStart":286,"_onStarted":1,"onContentLoad":285,"onLoad":286},"id":"1","title":"Test","startedDateTime":"2018-08-18T22:27:57.550751Z"}],"version":"1.2","creator":{"version":"3.2","name":"Splash"},"entries":[{"pageref":"1","time":121,"timings":{"connect":-1,"blocked":-1,"send":0,"ssl":-1,"receive":1,"dns":-1,"wait":120},"request":{"url":"https://rud.is/splash-js-test.html?2","headers":[{"value":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/602.1 (KHTML, like Gecko) splash Version/9.0 Safari/602.1","name":"User-Agent"},{"value":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8","name":"Accept"}],"queryString":[{"value":"","name":"2"}],"method":"GET","httpVersion":"HTTP/1.1","headersSize":188,"cookies":[],"bodySize":-1},"cache":{},"response":{"headers":[{"value":"nginx/1.13.9","name":"Server"},{"value":"Sat, 18 Aug 2018 22:20:16 GMT","name":"Date"},{"value":"text/html","name":"Content-Type"},{"value":"Sat, 18 Aug 2018 21:49:08 GMT","name":"Last-Modified"},{"value":"chunked","name":"Transfer-Encoding"},{"value":"keep-alive","name":"Connection"},{"value":"Accept-Encoding","name":"Vary"},{"value":"W/\"5b789454-15d\"","name":"ETag"},{"value":"Sun, 19 Aug 2018 21:49:08 GMT","name":"Expires"},{"value":"max-age=84532","name":"Cache-Control"},{"value":"max-age=31536000; includeSubDomains; preload","name":"Strict-Transport-Security"},{"value":"SAMEORIGIN","name":"X-Frame-Options"},{"value":"<3","name":"X-Powered-By"},{"value":"frame-ancestors 'self', default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';","name":"Content-Security-Policy"},{"value":"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';","name":"X-Content-Security-Policy"},{"value":"default-src * 'self' data: 'unsafe-inline' 'unsafe-eval'; report-uri 'https://hrbrmstr.report-uri.com/r/d/csp/reportOnly';","name":"X-WebKit-CSP"},{"value":"1; mode=block","name":"X-XSS-Protection"},{"value":"nosniff","name":"X-Content-Type-Options"},{"value":"gzip","name":"Content-Encoding"}],"ok":true,"redirectURL":"","httpVersion":"HTTP/1.1","bodySize":349,"cookies":[],"status":200,"content":{"encoding":"base64","mimeType":"text/html","text":"PGh0bWw+CiAgPGhlYWQ+CiAgICA8dGl0bGU+VGVzdDwvdGl0bGU+CiAgPC9oZWFkPgogIDxib2R5IG9ubG9hZD0iYWRkRWxlbWVudHMoKSI+CiAgICA8cD5UaGlzIGlzIGEgU3BsYXNoIHRlc3QgcGFnZS48L3A+CiAgICA8cD48c3BhbiBpZD0idGFyZ2V0Ij48L3NwYW4+PC9wPgogICAgPHNjcmlwdD4KICAgICAgZnVuY3Rpb24gYWRkRWxlbWVudHMoKSB7CiAgICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInRhcmdldCIpLmlubmVySFRNTCA9ICJUaGlzIHdvbid0IGJlIGhlcmUgaWYgamF2YXNjcmlwdCBpcyBkaXNhYmxlZCIgOwogICAgICB9ICAgIAogICAgPC9zY3JpcHQ+CiAgPC9ib2R5Pgo8L2h0bWw+Cg==","size":349},"headersSize":971,"statusText":"OK","url":"https://rud.is/splash-js-test.html?2"},"_splash_processing_state":"finished","startedDateTime":"2018-08-18T22:27:57.552544Z"}]}}
+}}}
