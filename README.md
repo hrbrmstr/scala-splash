@@ -145,7 +145,7 @@ println(s.renderHAR("https://rud.is/splash-js-test.html?1", responseBody = true)
 
 You can check out the library source for `run()` method examples and
 [take a look at the
-scaladocs](https://hrbrmstr.github.io/scala-splash/splash/index.html)
+scaladocs](https://hrbrmstr.github.io/scala-splash/index.html)
 for more information.
 
 I’ll be rounding out the corners on the library and submitting it to one
