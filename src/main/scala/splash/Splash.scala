@@ -1,5 +1,6 @@
 package splish
 
+import scopt._
 import requests._
 import requests.RequestAuth
 import requests.RequestAuth.Basic
@@ -382,6 +383,24 @@ case class Splash(private val splashHost: String = "localhost",
   }
 
 /**
+  * Run Python garbage collector in the Splash instance and clear internal WebKit caches.
+  *
+  * @return information about the number of objects freed and the status of the Splash instance
+  */
+  def reset() : ujson.Js = {
+
+    val splashURL = s"$splashHostUrlPrefix/_gc"
+
+    val res = requests.post(
+      splashURL, 
+      auth = auth
+    )
+  
+    ujson.Js(res.text)
+
+  }
+
+/**
   * Retrieve debug-level information for the Splash instance
   *
   * @return the Splash debug-level information (a `ujson.Js` parsed object)
@@ -441,11 +460,101 @@ case class Splash(private val splashHost: String = "localhost",
 
 }
 
+
 object SplashMain {
+
+  case class Config(
+    host: String = "localhost",
+    port: Integer = 8050,
+    user: String = null,
+    pass: String = null,
+    ssl: Boolean = false,
+    delay: Double = 2.0,
+    timeout: Double = 30.0,
+    render: String = "html",
+    url: String = null
+  )
+
   def main(args: Array[String]) {
-    val s = Splash()
-    println(s.renderHTML("https://rud.is/splash-test.html"))
-    println(s.renderJSON("https://rud.is/splash-test.html"))
-    println(s.renderHAR("https://rud.is/splash-test.html"))
+
+    val parser = new scopt.OptionParser[Config]("splash") {
+
+      head("splash", "1.0")
+
+      arg[String]("url").action((x, c) => c.copy(url = x)).
+      text("the URL to scrape")
+      
+      opt[String]('r', "render").optional().valueName("html").
+        action((x, c) => c.copy(render = x)).
+        validate( x =>
+          x match {
+            case "html" => success
+            case "json" => success
+            case "har" => success
+            case _ => failure("Option --render must be one of [html|json|har] and defaults to 'html' if not specified")
+          }).
+        text("request action; one of 'html', 'json' or 'har'")
+
+      help("help").text("prints this usage text")
+
+      opt[Double]('w', "wait").action((x, c) => c.copy(delay = x)).
+      text("How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is 2 seconds")
+
+      opt[Double]('t', "timeout").action((x, c) => c.copy(timeout = x)).
+      text("Overall page/connection timeout. Defaults to 30 seconds")
+
+      opt[String]('h', "host").optional().action((x, c) => c.copy(host = x)).
+        text("Splash instance host name or IP address (defaults to localhost)")
+
+      opt[Int]('p', "port").optional().action((x, c) => c.copy(port = x)).
+        text("Splash instance port if not the default (8050)")
+      
+      opt[String]('u', "user").optional().action((x, c) => c.copy(user = x)).
+        text("Splash username (if authentication is required). Default is no authentcation.")
+      
+      opt[String]('p', "pass").optional().action((x, c) => c.copy(pass = x)).
+        text("Splash password (if authentication is required). Default is no authentication.")
+      
+      opt[Unit]('s', "ssl").optional().action((x, c) => c.copy(ssl = true)).
+        text("Use an SSL connection to the Splash instance? (defaults to false)")
+
+    }
+
+    parser.parse(args, Config()) match {
+
+      case Some(config) => {
+
+        val s = Splash(config.host, config.port, config.user, config.pass, config.ssl)
+
+        if (!s.isActive()) {
+          System.err.println("Splash instance is not active")
+          System.exit(-1)
+        }
+
+        s.reset()
+
+        config.render match {
+          case "html" => println(s.renderHTML(
+            config.url, wait = config.delay, timeout = config.timeout)
+          )
+          case "har" => println(s.renderHAR(
+            config.url, responseBody = true, wait = config.delay, timeout = config.timeout)
+          )
+          case "json" => println(s.renderJSON(
+            config.url, responseBody = true, html = true, png = true, jpeg = true,
+            iframes = true, wait = config.delay, timeout = config.timeout)
+          )
+        }
+
+      }
+
+      case None => {
+        System.err.println("An unknown error occurred")
+        System.exit(-1)
+      }
+
+    }
+
   }
+
 }

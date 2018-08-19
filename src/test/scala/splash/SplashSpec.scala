@@ -28,6 +28,10 @@ class SplashSpec extends FlatSpec with Matchers {
     s.renderHTML(testURL) shouldEqual "<html><head>\n<title>Test</title>\n</head>\n<body>\ntest\n\n\n</body></html>"
   }
 
+  "reset()" should "work" in {
+    s.reset()("status").str shouldEqual "ok"
+  }
+
   "renderHAR()" should "produce a valid HAR document" in {
     s.renderHAR(testURL)("log")("pages")(0)("title").str shouldEqual "Test"
   }

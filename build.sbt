@@ -24,6 +24,7 @@ scalaVersion := "2.12.6"
 libraryDependencies += scalaTest % Test
 libraryDependencies += "com.lihaoyi" %% "requests" % "0.1.3"
 libraryDependencies += "com.lihaoyi" %% "ujson" % "0.6.6"
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0"
 
 publishArtifact in Test := false
 
