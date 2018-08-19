@@ -12,7 +12,9 @@ when needed and ease of use for more casual scraping tasks.
 
 You can get it up and running locally with Docker via:
 
-    sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash
+{{{
+sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash
+}}}
 
 If you've built the source and run `sbt packInstall`, you can start playing
 with `splash` on the command line via `~/local/bin/splash-main`. Here's the help:
