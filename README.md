@@ -19,6 +19,25 @@ You can get it up and running locally with Docker via:
 
     sudo docker run -p 8050:8050 -p 5023:5023 scrapinghub/splash
 
+If you've built the source and run `sbt packInstall`, you can start playing
+with `splash` on the command line via `~/local/bin/splash-main`. Here's the help:
+
+```
+splash 1.0
+Usage: splash [options] url
+
+  url                    the URL to scrape
+  -r, --render html      request action; one of 'html', 'json' or 'har'
+  --help                 prints this usage text
+  -w, --wait <value>     How long to wait (in seconds) after loading the page (to allow js onX scripts to run). Default is 2 seconds
+  -t, --timeout <value>  Overall page/connection timeout. Defaults to 30 seconds
+  -h, --host <value>     Splash instance host name or IP address (defaults to localhost)
+  -p, --port <value>     Splash instance port if not the default (8050)
+  -u, --user <value>     Splash username (if authentication is required). Default is no authentcation.
+  -p, --pass <value>     Splash password (if authentication is required). Default is no authentication.
+  -s, --ssl              Use an SSL connection to the Splash instance? (defaults to false)
+  ```
+
 The first thing we need to do is make a connection to the server
 
 ``` scala
