@@ -131,9 +131,11 @@ case class Splash(private val splashHost: String = "localhost",
     val res = requests.get(
       splashURL, 
       auth = auth,
-      params = processParams(urlToRender, baseURL, timeout, resourceTimeout, wait, 
-                             proxy, viewport, js, jsSource, filters, allowedDomains, 
-                             allowedContentTypes, forbiddenContentTypes, images)
+      params = processParams(
+        urlToRender, baseURL, timeout, resourceTimeout, wait, 
+        proxy, viewport, js, jsSource, filters, allowedDomains, 
+        allowedContentTypes, forbiddenContentTypes, images
+      )
     )
 
     res.text
@@ -479,7 +481,7 @@ object SplashMain {
 
     val parser = new scopt.OptionParser[Config]("splash") {
 
-      head("splash", "1.0")
+      head("splash", "1.0", "Render web content in a javascript context to stdout.")
 
       arg[String]("url").action((x, c) => c.copy(url = x)).
       text("the URL to scrape")
